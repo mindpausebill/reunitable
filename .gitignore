@@ -1,0 +1,7 @@
+/node_modules
+application/yarn.lock
+
+# Local Netlify folder
+.netlify
+
+.idea

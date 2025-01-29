@@ -1,0 +1,189 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;900&family=Sen:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    line-height: 1.618;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: theme('fontFamily.alpha');
+  }
+
+  /* Set styles for disabled radio buttons and checkboxes */
+  [type='checkbox']:disabled,
+  [type='radio']:disabled {
+    accent-color: theme('colors.gray.400');
+    color: theme('colors.gray.400');
+  }
+
+  select {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20"><path stroke="%23737373" stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M6 8l4 4 4-4"/></svg>');
+    background-size: theme('spacing.6');
+    background-position: right theme('spacing.3') center;
+    background-repeat: no-repeat;
+    appearance: none;
+    padding-right: theme('padding.12') !important;
+  }
+
+  [dir='rtl'] select {
+    background-position: left theme('spacing.2') center;
+  }
+
+  /* Checkbox */
+  [type='checkbox']:after {
+    content: '';
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2393B68C' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+    background-size: theme('spacing.6');
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+
+  /* Set styles for invalid select to appear as a placeholder */
+  select:invalid {
+    color: theme('colors.gray.500');
+  }
+
+  /* Remove arrows from number input */
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number'] {
+    -webkit-appearance: none;
+    margin: 0;
+    -moz-appearance: textfield !important;
+  }
+
+  /* Fix for next js */
+  [data-nextjs-scroll-focus-boundary] {
+    display: contents;
+  }
+}
+
+@layer components {
+  /* Button */
+  .reunitable-button {
+    display: inline-flex;
+    font-family: theme('fontFamily.heading');
+    font-size: theme('fontSize.base');
+    align-items: center;
+    gap: theme('spacing.3');
+    padding: theme('spacing.3') theme('spacing.9');
+    color: theme('colors.white');
+    background-color: theme('colors.alpha.DEFAULT');
+    border-radius: theme('borderRadius.full');
+    transition: background-color theme('transitionDuration.150');
+    border: 2px solid theme('colors.alpha.DEFAULT');
+  }
+
+  @media screen and (min-width: theme('screens.lg')) {
+    .reunitable-button {
+      font-size: theme('fontSize.xl');
+      padding: theme('spacing.4') theme('spacing.12');
+    }
+  }
+
+  .reunitable-button--small {
+    font-size: theme('fontSize.base');
+    padding: theme('spacing.3') theme('spacing.9');
+    border-radius: theme('borderRadius.full');
+  }
+
+  .reunitable-secondary-button {
+    display: inline-flex;
+    font-family: theme('fontFamily.heading');
+    align-items: center;
+    font-size: theme('fontSize.base');
+    gap: theme('spacing.3');
+    padding: theme('spacing.3') theme('spacing.9');
+    color: theme('colors.white');
+    background-color: transparent;
+    border-radius: theme('borderRadius.full');
+    transition: background-color theme('transitionDuration.150');
+    border: 2px solid theme('colors.white');
+  }
+
+  @media screen and (min-width: theme('screens.lg')) {
+    .reunitable-secondary-button {
+      font-size: theme('fontSize.xl');
+      padding: theme('spacing.4') theme('spacing.12');
+    }
+  }
+
+  .reunitable-button svg,
+  .reunitable-secondary-button svg {
+    flex-shrink: 0;
+    width: theme('width.6');
+    height: theme('height.6');
+  }
+
+  /* Table styles */
+  .reunitable-table thead th {
+    color: theme('colors.alpha.DEFAULT');
+    padding: 0 theme('spacing.3');
+    text-align: left;
+    font-size: theme('fontSize.sm');
+    font-weight: theme('fontWeight.normal');
+  }
+
+  .reunitable-table tbody tr {
+    border-top: 1px solid;
+  }
+
+  .reunitable-table tbody tr:last-of-type {
+    border-bottom: 1px solid;
+  }
+
+  .reunitable-table td,
+  .reunitable-table th {
+    padding: 0 theme('spacing.3');
+    @apply first:pl-0 last:pr-0;
+  }
+
+  .reunitable-table tbody td {
+    color: theme('colors.alpha.dark.300');
+    padding: theme('spacing.4');
+  }
+
+  /* Responsive iframe */
+  .reunitable-video {
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 100%;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+  }
+
+  .reunitable-video iframe {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+  }
+
+  /* Reunitable counter */
+  .re-counter {
+    counter-reset: section;
+  }
+
+  .re-counter__section::before {
+    counter-increment: section;
+    content: counter(section) '.';
+    padding-right: theme('spacing.3');
+  }
+
+  .re-subcounter {
+    counter-reset: subsection;
+  }
+
+  .re-subcounter__section::before {
+    counter-increment: subsection;
+    content: counter(section) '.' counter(subsection);
+    padding-right: theme('spacing.4');
+  }
+}

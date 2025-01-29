@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/boxApiCsvUpload",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/notifySecondaryContacts",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}

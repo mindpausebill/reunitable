@@ -1,0 +1,387 @@
+datasource database {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  schemas   = ["public","access"]
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+generator fabbrica {
+  provider    = "prisma-fabbrica"
+  output      = "./generated/factories"
+  noTranspile = true
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+  output   = "../app/admin/databaseERD.svg"
+}
+
+enum StripeCouponDurationEnum {
+  forever
+  once
+  repeating
+  @@schema("public")
+}
+
+enum StripePriceIntervalEnum {
+  day
+  week
+  month
+  year
+  @@schema("public")
+}
+
+enum StripePriceTypeEnum {
+  one_time
+  recurring
+  @@schema("public")
+}
+
+enum StripeSubscriptionSatusEnum {
+  active
+  trialing
+  canceled
+  incomplete
+  incomplete_expired
+  past_due
+  unpaid
+  paused
+  @@schema("public")
+}
+
+enum ConversationNotificationStatus {
+  primaryUserNotified
+  secondaryUserNotified
+  conversationSeen
+  @@schema("public")
+}
+
+model Organisation {
+  createdAt     DateTime?          @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  modifiedAt    DateTime?          @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  users         UserOrganisation[]
+  parent        Organisation?      @relation(fields: [parentId], references: [id], name: "parentChild")
+  parentId      String?            @database.Uuid
+  children      Organisation[]     @relation(name: "parentChild")
+  conversations Conversation[]     @relation(name: "organisation")
+  createdBy     User?              @relation(fields: [createdById], references: [id], name: "OrganisationCreatedBy")
+  createdById   String?            @database.Uuid
+  modifiedBy    User?              @relation(fields: [modifiedById], references: [id], name: "OrganisationModifiedBy")
+  modifiedById  String?            @database.Uuid
+  id            String             @id @default(dbgenerated("gen_random_uuid()")) @database.Uuid
+  name          String
+
+  @@schema("access")
+}
+
+model Permission {
+  createdAt    DateTime?        @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  modifiedAt   DateTime?        @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  roles        RolePermission[]
+  createdBy    User?            @relation(fields: [createdById], references: [id], name: "PermissionCreatedBy")
+  createdById  String?          @database.Uuid
+  modifiedBy   User?            @relation(fields: [modifiedById], references: [id], name: "PermissionModifiedBy")
+  modifiedById String?          @database.Uuid
+  id           String           @id @default(dbgenerated("gen_random_uuid()")) @database.Uuid
+  name         String
+
+  @@schema("access")
+}
+
+model Role {
+  createdAt         DateTime?              @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  modifiedAt        DateTime?              @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  userOrganisations UserOrganisationRole[]
+  permissions       RolePermission[]
+  users             UserRole[]
+  createdBy         User?                  @relation(fields: [createdById], references: [id], name: "RoleCreatedBy")
+  createdById       String?                @database.Uuid
+  modifiedBy        User?                  @relation(fields: [modifiedById], references: [id], name: "RoleModifiedBy")
+  modifiedById      String?                @database.Uuid
+  id                String                 @id @default(dbgenerated("gen_random_uuid()")) @database.Uuid
+  name              String
+
+  @@schema("access")
+}
+
+model RolePermission {
+  createdAt    DateTime?  @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  modifiedAt   DateTime?  @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  role         Role       @relation(fields: [roleId], references: [id])
+  roleId       String     @database.Uuid
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  permissionId String     @database.Uuid
+  createdBy    User?      @relation(fields: [createdById], references: [id], name: "RolePermissionCreatedBy")
+  createdById  String?    @database.Uuid
+  modifiedBy   User?      @relation(fields: [modifiedById], references: [id], name: "RolePermissionModifiedBy")
+  modifiedById String?    @database.Uuid
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @database.Uuid
+
+  @@schema("access")
+}
+
+model User {
+  organisations                UserOrganisation[]
+  roles                        UserRole[]
+  OrganisationCreated          Organisation[]         @relation(name: "OrganisationCreatedBy")
+  OrganisationModified         Organisation[]         @relation(name: "OrganisationModifiedBy")
+  PermissionCreated            Permission[]           @relation(name: "PermissionCreatedBy")
+  PermissionModified           Permission[]           @relation(name: "PermissionModifiedBy")
+  RoleCreated                  Role[]                 @relation(name: "RoleCreatedBy")
+  RoleModified                 Role[]                 @relation(name: "RoleModifiedBy")
+  RolePermissionCreated        RolePermission[]       @relation(name: "RolePermissionCreatedBy")
+  RolePermissionModified       RolePermission[]       @relation(name: "RolePermissionModifiedBy")
+  UserOrganisationCreated      UserOrganisation[]     @relation(name: "UserOrganisationCreatedBy")
+  UserOrganisationModified     UserOrganisation[]     @relation(name: "UserOrganisationModifiedBy")
+  UserRoleCreated              UserRole[]             @relation(name: "UserRoleCreatedBy")
+  UserRoleModified             UserRole[]             @relation(name: "UserRoleModifiedBy")
+  UserOrganisationRoleCreated  UserOrganisationRole[] @relation(name: "UserOrganisationRoleCreatedBy")
+  UserOrganisationRoleModified UserOrganisationRole[] @relation(name: "UserOrganisationRoleModifiedBy")
+  ConversationCreated          Conversation[]         @relation(name: "ConversationCreatedBy")
+  ConversationModified         Conversation[]         @relation(name: "ConversationModifiedBy")
+  SamaritanCreated             Samaritan[]            @relation(name: "SamaritanCreatedBy")
+  SamaritanModified            Samaritan[]            @relation(name: "SamaritanModifiedBy")
+  MessageCreated               Message[]              @relation(name: "MessageCreatedBy")
+  MessageModified              Message[]              @relation(name: "MessageModifiedBy")
+  id                           String                 @id @default(dbgenerated("gen_random_uuid()")) @database.Uuid
+  firstName                    String?
+  lastName                     String?
+  metadata                     Json?
+  email                        String                 @unique
+  phone                        String?
+
+  @@schema("access")
+}
+
+model UserOrganisation {
+  createdAt      DateTime?              @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  modifiedAt     DateTime?              @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  user           User                   @relation(fields: [userId], references: [id])
+  userId         String                 @database.Uuid
+  organisation   Organisation           @relation(fields: [organisationId], references: [id])
+  organisationId String                 @database.Uuid
+  roles          UserOrganisationRole[]
+  createdBy      User?                  @relation(fields: [createdById], references: [id], name: "UserOrganisationCreatedBy")
+  createdById    String?                @database.Uuid
+  modifiedBy     User?                  @relation(fields: [modifiedById], references: [id], name: "UserOrganisationModifiedBy")
+  modifiedById   String?                @database.Uuid
+  id             String                 @id @default(dbgenerated("gen_random_uuid()")) @database.Uuid
+
+  @@unique([userId, organisationId])
+  @@schema("access")
+}
+
+model UserOrganisationRole {
+  createdAt          DateTime?        @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  modifiedAt         DateTime?        @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  userOrganisation   UserOrganisation @relation(fields: [userOrganisationId], references: [id])
+  userOrganisationId String           @database.Uuid
+  role               Role             @relation(fields: [roleId], references: [id])
+  roleId             String           @database.Uuid
+  createdBy          User?            @relation(fields: [createdById], references: [id], name: "UserOrganisationRoleCreatedBy")
+  createdById        String?          @database.Uuid
+  modifiedBy         User?            @relation(fields: [modifiedById], references: [id], name: "UserOrganisationRoleModifiedBy")
+  modifiedById       String?          @database.Uuid
+  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @database.Uuid
+
+  @@unique([userOrganisationId, roleId])
+  @@schema("access")
+}
+
+model UserRole {
+  createdAt    DateTime? @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  modifiedAt   DateTime? @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  user         User      @relation(fields: [userId], references: [id])
+  userId       String    @database.Uuid
+  role         Role      @relation(fields: [roleId], references: [id])
+  roleId       String    @database.Uuid
+  createdBy    User?     @relation(fields: [createdById], references: [id], name: "UserRoleCreatedBy")
+  createdById  String?   @database.Uuid
+  modifiedBy   User?     @relation(fields: [modifiedById], references: [id], name: "UserRoleModifiedBy")
+  modifiedById String?   @database.Uuid
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @database.Uuid
+
+  @@schema("access")
+}
+
+model Conversation {
+  createdAt      DateTime?                      @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  modifiedAt     DateTime?                      @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  organisation   Organisation                   @relation(fields: [organisationId], references: [id], name: "organisation")
+  organisationId String                         @database.Uuid
+  samaritan      Samaritan                      @relation(fields: [samaritanId], references: [id], name: "samaritan")
+  samaritanId    String                         @database.Uuid
+  messages       Message[]                      @relation(name: "conversation")
+  createdBy      User?                          @relation(fields: [createdById], references: [id], name: "ConversationCreatedBy")
+  createdById    String?                        @database.Uuid
+  modifiedBy     User?                          @relation(fields: [modifiedById], references: [id], name: "ConversationModifiedBy")
+  modifiedById   String?                        @database.Uuid
+  id             String                         @id @default(dbgenerated("gen_random_uuid()")) @database.Uuid
+  latitude       Float?
+  longitude      Float?
+  location       Json?
+  responseStatus ConversationNotificationStatus @default(primaryUserNotified)
+
+  @@unique([samaritanId, organisationId])
+  @@schema("public")
+}
+
+model Message {
+  createdAt      DateTime?    @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  modifiedAt     DateTime?    @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], name: "conversation")
+  conversationId String       @database.Uuid
+  createdBy      User?        @relation(fields: [createdById], references: [id], name: "MessageCreatedBy")
+  createdById    String?      @database.Uuid
+  modifiedBy     User?        @relation(fields: [modifiedById], references: [id], name: "MessageModifiedBy")
+  modifiedById   String?      @database.Uuid
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @database.Uuid
+  latitude       Float?
+  longitude      Float?
+  location       Json?
+  message        String
+  fromSamaritan  Boolean
+  read           Boolean
+  photo          Json?
+
+  @@schema("public")
+}
+
+model Samaritan {
+  createdAt     DateTime?      @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  modifiedAt    DateTime?      @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @database.Timestamptz(6)
+  conversations Conversation[] @relation(name: "samaritan")
+  createdBy     User?          @relation(fields: [createdById], references: [id], name: "SamaritanCreatedBy")
+  createdById   String?        @database.Uuid
+  modifiedBy    User?          @relation(fields: [modifiedById], references: [id], name: "SamaritanModifiedBy")
+  modifiedById  String?        @database.Uuid
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @database.Uuid
+  name          String
+  email         String?
+  phone         String?
+
+  @@schema("public")
+}
+
+model Setting {
+  id    String @id @default(dbgenerated("gen_random_uuid()")) @database.Uuid
+  key   String @unique
+  value Json
+
+  @@schema("public")
+}
+
+model StripeCoupon {
+  id                 String                   @id @default(dbgenerated("gen_random_uuid()")) @database.Uuid
+  couponId           String                   @unique
+  amountOff          Int?
+  currency           String?
+  duration           StripeCouponDurationEnum
+  duration_in_months Int?
+  name               String?
+  percentOff         Float?
+  promotionCodes     StripePromotionCode[]
+  products           StripeCouponProduct[]
+
+  @@schema("public")
+}
+
+model StripeCouponProduct {
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @database.Uuid
+  product   StripeProduct @relation(fields: [productId], references: [productId])
+  productId String
+  coupon    StripeCoupon  @relation(fields: [couponId], references: [couponId])
+  couponId  String
+
+  @@schema("public")
+}
+
+model StripeCustomer {
+  promotionCode  StripePromotionCode[]
+  subscription   StripeSubscription?
+  id             String                @id @default(dbgenerated("gen_random_uuid()")) @database.Uuid
+  userId         String                @unique @database.Uuid
+  customerId     String?
+  fullName       String?
+  avatarUrl      String?
+  billingAddress Json?
+  paymentMethod  Json?
+
+  @@schema("public")
+}
+
+model StripePrice {
+  id                  String                   @id @default(dbgenerated("gen_random_uuid()")) @database.Uuid
+  priceId             String                   @unique
+  product             StripeProduct?           @relation(fields: [productId], references: [productId])
+  productId           String?
+  active              Boolean?
+  description         String?
+  unitAmount          Int?
+  currency            String?
+  type                StripePriceTypeEnum?
+  pricingPlanInterval StripePriceIntervalEnum?
+  intervalCount       Int?
+  trialPeriodDays     Int?
+  subscription        StripeSubscription[]
+  metadata            Json?
+
+  @@schema("public")
+}
+
+model StripeProduct {
+  id          String                @id @default(dbgenerated("gen_random_uuid()")) @database.Uuid
+  productId   String                @unique
+  active      Boolean?
+  name        String?
+  description String?
+  image       String?
+  metadata    Json?
+  coupons     StripeCouponProduct[]
+  price       StripePrice[]
+
+  @@schema("public")
+}
+
+model StripePromotionCode {
+  user            StripeCustomer? @relation(fields: [userId], references: [userId])
+  userId          String?         @database.Uuid
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @database.Uuid
+  promotionCodeId String          @unique
+  active          Boolean
+  code            String
+  coupon          StripeCoupon    @relation(fields: [couponId], references: [couponId])
+  couponId        String
+  maxRedemptions  Int?
+  expires_at      DateTime?
+
+  @@schema("public")
+}
+
+model StripeSubscription {
+  user               StripeCustomer               @relation(fields: [userId], references: [userId])
+  userId             String                       @unique @database.Uuid
+  id                 String                       @id @default(dbgenerated("gen_random_uuid()")) @database.Uuid
+  subscriptionId     String                       @unique
+  subscriptionStatus StripeSubscriptionSatusEnum?
+  metadata           Json?
+  quantity           Int?
+  cancelAtPeriodEnd  Boolean?
+  created            DateTime
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  endedAt            DateTime?
+  cancelAt           DateTime?
+  canceledAt         DateTime?
+  trialStart         DateTime?
+  trialEnd           DateTime?
+  price              StripePrice                  @relation(fields: [priceId], references: [priceId])
+  priceId            String
+
+  @@schema("public")
+}
